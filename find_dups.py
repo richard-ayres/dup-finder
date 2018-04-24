@@ -3,6 +3,7 @@
 import sys
 import os
 import re
+from collections import defaultdict
 
 DEFAULT_PATH = './'
 
@@ -17,8 +18,10 @@ class DupFinder(object):
         # This is a database of class and function definitions, with a list of
         # the filenames in which they were each found
         self.found = {
-            'def': {},     # function names pointing to a list of their files
-            'class': {}    # class names pointing to a list of their files
+            # function names pointing to a list of their files
+            'def': defaultdict(list),
+            # class names pointing to a list of their files
+            'class': defaultdict(list)
         }
 
         # Useful regexes that we will use later
@@ -52,9 +55,6 @@ class DupFinder(object):
     def _add_definition(self, typ, name, filename):
         """Add the given line description and filename to our database of
         classes and function definitions."""
-        if name not in self.found[typ]:
-            self.found[typ][name] = list()
-
         self.found[typ][name].append(filename)
 
     def _process_line(self, filename, line):
@@ -79,9 +79,9 @@ class DupFinder(object):
 
     def _do_show_dups(self, typ):
         """Show duplicates of the given definition type"""
-        if typ not in self.found:
-            return
 
+        # f is a tuple of (string, list), the string is the name of the object,
+        # the list is of files containing the object
         multiples = [f for f in self.found[typ].iteritems() if len(f[1]) > 1]
 
         if not multiples:
